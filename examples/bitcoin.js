@@ -3,6 +3,15 @@ var Message = require('./Message').Message;
 
 var m = new Manager();
 
+process.once('SIGINT', function() {
+	console.log('Got SIGINT; closing...');
+	process.once('SIGINT', function() {
+		// Double SIGINT; force-kill
+		process.exit(0);
+	});
+	m.shutdown();
+});
+
 m.handleConnect = function handleConnect(p) {
 	// Send VERSION message
 	var m = new Message(p.magicBytes, true)
