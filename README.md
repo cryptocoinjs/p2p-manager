@@ -86,3 +86,8 @@ setTimeout(function() {
   m.removeListener('answer', waitForAnswer);
 }, 10000);
 ```
+
+## Peers
+The Manager keeps a list of known Peers to connect to (the "pool"), as well as a list of those currently connected ("active").
+
+As your implementation discovers new Peers, use the `Manager.addPool(host, port)` method to tell the Manager about them. If the number of active Peers is currently below the minimum (`options.minPeers`), a connection will be attempted immediately. Otherwise, they will just be added to the pool. `Manager.addActive(host, port)` adds a new peer and attempts to connect to it immediately, regardless if the number of active Peers is above the threshhold.
