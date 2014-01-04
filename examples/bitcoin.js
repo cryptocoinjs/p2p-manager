@@ -1,7 +1,11 @@
 var Manager = require('../lib/Manager').Manager;
 var Message = require('./Message').Message;
+var crypto = require('crypto');
 
 var m = new Manager();
+// Pick a new random Nonce, to prevent connecting to ourselves
+m.nonce = crypto.randomBytes(8);
+
 
 process.once('SIGINT', function() {
 	console.log('Got SIGINT; closing...');
@@ -18,8 +22,8 @@ m.handleConnect = function handleConnect(p) {
 		.putInt32(70000) // version
 		.putInt64(1) // services
 		.putInt64(Math.round(new Date().getTime()/1000)) // timestamp
-		.pad(26) // addr_me
-		.pad(26) // addr_you
+		.pad(26) // addr_recv
+		.pad(26) // addr_from
 		.putInt64(self.nonce) // nonce
 		.putVarString('Node.js lite peer')
 		.putInt32(10); // start_height
@@ -31,20 +35,26 @@ m.handleConnect = function handleConnect(p) {
 	return true;
 };
 
-m.versionMessage = function versionMessage(data) {
+m.versionMessage = function versionMessage(data, p) {
 	var parsed = {};
 	parsed.version = data.readUInt32LE(0);
 	parsed.services = new Buffer(8);
 	data.copy(parsed.services, 0, 4, 12);
 	parsed.time = new Buffer(8);
 	data.copy(parsed.time, 0, 12, 20);
-	parsed.addr_me = getAddr(data.slice(20, 46));
-	parsed.addr_you = getAddr(data.slice(46, 72));
+	parsed.addr_recv = getAddr(data.slice(20, 46));
+	parsed.addr_from = getAddr(data.slice(46, 72));
 	parsed.nonce = new Buffer(8);
 	data.copy(parsed.nonce, 0, 72, 80);
 	parsed.client = Message.prototype.getVarString(data, 80);
 	parsed.height = data.readUInt32LE(data.length-4);
 	console.log(parsed);
+	
+	if (parsed.nonce.toString('hex') === this.nonce.toString('hex')) {
+		// We connected to ourselves!
+		this.disconnect(p);
+		return false;
+	}
 	
 	// Send VERACK message
 };
