@@ -27,6 +27,7 @@ m.handleConnect = function handleConnect(p) {
 	var raw = m.build('version');
 	//console.log(raw.toString('hex'));
 	p.send(raw);
+	p.state = 'awaiting-verack';
 	return true;
 };
 
@@ -44,7 +45,13 @@ m.versionMessage = function versionMessage(data) {
 	parsed.client = Message.prototype.getVarString(data, 80);
 	parsed.height = data.readUInt32LE(data.length-4);
 	console.log(parsed);
+	
+	// Send VERACK message
 };
+
+m.verackMessage = function verackMessage(data, p) {
+  p.state = 'verack-received';
+}
 
 // bitseed.xf2.org
 // dnsseed.bluematt.me
