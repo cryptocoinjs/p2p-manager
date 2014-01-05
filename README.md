@@ -90,4 +90,13 @@ setTimeout(function() {
 ## Peers
 The Manager keeps a list of known Peers to connect to (the "pool"), as well as a list of those currently connected ("active").
 
-As your implementation discovers new Peers, use the `Manager.addPool(host, port)` method to tell the Manager about them. If the number of active Peers is currently below the minimum (`options.minPeers`), a connection will be attempted immediately. Otherwise, they will just be added to the pool. `Manager.addActive(host, port)` adds a new peer and attempts to connect to it immediately, regardless if the number of active Peers is above the threshhold.
+As your implementation discovers new Peers, use the `Manager.addPool(hosts)` method to tell the Manager about them. If the number of active Peers is currently below the minimum (`options.minPeers`), a connection will be attempted immediately. Otherwise, they will just be added to the pool. `Manager.addActive(hosts)` adds a new peer and attempts to connect to it immediately, regardless if the number of active Peers is above the threshhold.
+
+## Peer lists
+The `seedPeers` argument of `launch()`, and the `hosts` argument of `addPool()` and `addActive()` are lists of hosts, expressed one of the following ways:
+
+* If it's a String, it's assumed to be the hostname/ip of one host to use; make sure to include a port number as part of the hostname (colon-delimited).
+* If it's an Array, it's looped through and each element inspected.
+* * If it's a String, it's assumed to be a hostname/ip of a host to use.
+* * If it's an Array, index zero is used as host and index one is used as port.
+* * If it's an Object, the `host` property is used as host, and the `port` property is used as port.

@@ -68,7 +68,8 @@ m.verackMessage = function verackMessage(data, p) {
 // seed.bitcoin.sipa.be
 // dnsseed.bitcoin.dashjr.org
 
-m.launch(['dnsseed.bluematt.me']);
+m.launch('dnsseed.bluematt.me');
+m.addPool(['seed.bitcoin.sipa.be', 'dnsseed.bitcoin.dashjr.org']);
 
 
 
