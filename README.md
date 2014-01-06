@@ -51,7 +51,8 @@ The PeerManager allows sending messages to a collection of Peers at once, based 
 * `value`: Value of the property the Peers need to match to be included in the set. Matching is done in a case-insensitive way for strings. Passing an array for this argument requires Peers match any one of the array's values.
 * `cmd`: (String) Message name to be sent to the Peers
 * `payload`: (Buffer) Binary data to be sent to the Peers
-* `callback`: (function) If provided, is bound to the "`message`" event of the Peers contacted, to await their reply
+* `answerCmd`: (String) Message name of answering message. If null/false, defaults to all `message` events.
+* `callback`: (function) If provided, is bound to the "`answerCmd`" event of the Peers contacted, to await their reply
 
 ```js
 PeerManager.send('all', 'state', 'connected', 'hi', new Buffer([1,2,3,4,5])); // Send a message to all connected clients
@@ -63,8 +64,32 @@ The function returns an dictionary of Peers the message was sent to, stored by t
 
 If you're expecting a specific answer to your message, there's a few ways you can listen in:
 
+### Listen to only answer messages, from just the filtered peers
+Probably the most common, and the most specific listening type:
+
+```js
+var m = new PeerManager();
+var waitForAnswer = function(d) {
+  console.log(d.peer.getUUID()+': has answered', d.data.toString('hex'));
+  d.peer.removeListener('message', this); // This listener doesn't care about further messages
+  delete peers[d.peer.getUUID()]; // Remove this peer from the list of peers who haven't answered yet
+};
+
+var peers = m.send(2, 'state', 'waiting', 'knock', new Buffer([1,2,3]), 'answer', waitForAnswer);
+
+setTimeout(function() {
+  // Ten seconds have passed; give up on those who haven't answered
+  for (var uuid in peers) {
+    if (peers.hasOwnProperty(uuid)) {
+      console.log(uuid+' never answered...');
+      peers[uuid].removeListener('message', waitForAnswer);
+    }
+  }
+}, 10000);
+```
+
 ### Listen to all messages, from just the filtered Peers 
-A good method if you expect the answer you seek to be in the next few messages from those Peers:
+A good method if you expect the answer you seek to be in the next few messages from those Peers, and the answer might be one of several messages ('answer' or 'error'):
 
 ```js
 var m = new PeerManager();
@@ -76,7 +101,7 @@ var waitForAnswer = function(d) {
   delete peers[d.peer.getUUID()]; // Remove this peer from the list of peers who haven't answered yet
 };
 
-var peers = m.send(2, 'state', 'waiting', 'knock', new Buffer([1,2,3]), waitForAnswer);
+var peers = m.send(2, 'state', 'waiting', 'knock', new Buffer([1,2,3]), false, waitForAnswer);
 
 setTimeout(function() {
   // Ten seconds have passed; give up on those who haven't answered
@@ -90,7 +115,7 @@ setTimeout(function() {
 ```
 
 ### Listen to only answer messages, from all Peers
-If there are lots of other messages being sent around, but very few of the particular answer messages you're looking for, this works well:
+If there are lots of other messages being sent around, but very few of the particular answer messages you're looking for, this works well, or if there's a possibility another peer will answer on behalf of the peer you requested from:
 
 ```js
 var m = new PeerManager();
