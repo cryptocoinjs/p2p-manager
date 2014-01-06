@@ -8,6 +8,11 @@ var Message = exports.Message = function Message(magic) {
 Message.prototype.checksum = function checksum() {
   return new Buffer(sha256.x2(this.buffer.slice(0, this.cursor), { asBytes:true }));
 };
+Message.prototype.raw = function raw() {
+  var out = new Buffer(this.cursor);
+  this.buffer.copy(out, 0, 0, this.cursor);
+  return out;
+};
 Message.prototype.build = function build(command) {
   var out = new Buffer(this.cursor + 24);
   out.writeUInt32LE(this.magicBytes, 0); // magic

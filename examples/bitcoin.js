@@ -22,7 +22,7 @@ m.on('peerConnect', function handleConnect(d) {
 	var p = d.peer;
 	
 	// Send VERSION message
-	var m = new Message(p.magicBytes, true)
+	var msg = new Message(p.magicBytes, true)
 		.putInt32(70000) // version
 		.putInt64(1) // services
 		.putInt64(Math.round(new Date().getTime()/1000)) // timestamp
@@ -32,9 +32,7 @@ m.on('peerConnect', function handleConnect(d) {
 		.putVarString('Node.js lite peer')
 		.putInt32(10); // start_height
 
-	var raw = m.build('version');
-	//console.log(raw.toString('hex'));
-	p.send(raw);
+	p.send('version', msg.raw());
 	p.state = 'awaiting-verack';
 	return true;
 });
@@ -68,7 +66,7 @@ m.on('versionMessage', function versionMessage(d) {
 	data.copy(parsed.nonce, 0, 72, 80);
 	parsed.client = Message.prototype.getVarString(data, 80);
 	parsed.height = data.readUInt32LE(data.length-4);
-	console.log(parsed);
+	console.log('VERSION:', parsed);
 	
 	if (parsed.nonce.toString('hex') === this.nonce.toString('hex')) {
 		// We connected to ourselves!
@@ -77,6 +75,7 @@ m.on('versionMessage', function versionMessage(d) {
 	}
 	
 	// Send VERACK message
+  d.peer.send('verack');
 });
 
 // Every 'verack' message, from every active peer
