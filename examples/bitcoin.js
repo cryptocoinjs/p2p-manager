@@ -7,6 +7,7 @@ var m = new PeerManager();
 // Pick a new random Nonce, to prevent connecting to ourselves
 m.nonce = crypto.randomBytes(8);
 
+var managerReady = false;
 
 process.once('SIGINT', function() {
 	console.log('Got SIGINT; closing...');
@@ -44,7 +45,7 @@ m.on('peerMessage', function peerMessage(d) {
 
 // Error messages of various severity, from the PeerManager
 m.on('error', function error(d) {
-	console.log('('+d.severity+'): '+d.message);
+	if (d.message.severity != 'info') console.log('('+d.severity+'): '+d.message);
 });
 
 m.on('status', function status(d) {
@@ -79,8 +80,27 @@ m.on('versionMessage', function versionMessage(d) {
 });
 
 // Every 'verack' message, from every active peer
-m.on('verackMesasge', function verackMessage(d) {
+m.on('verackMessage', function verackMessage(d) {
   d.peer.state = 'verack-received';
+  if (managerReady === false) {
+    managerReady = true; // At least one peer now has responded
+    setTimeout(managerInit, 2*1000); // Do initialization stuff after a few seconds, to let others connect too
+  }
+});
+
+// Every 'addr' message, from every active peer
+m.on('addrMessage', function addrMessage(d) {
+  var data = d.data;
+  var parsed = [];
+  
+  var addrNum = Message.prototype.getVarInt(data, 0);
+  for (var i = addrNum[1]; i < data.length; i += 30) {
+    parsed.push(getAddr(data.slice(i, i+30)));
+  }
+  console.log('ADDR:', parsed);
+  if (parsed.length != addrNum[0]) {
+    console.log('Was supposed to get '+addrNum[0]+' addresses, but got '+parsed.length+' instead');
+  }
 });
 
 // bitseed.xf2.org
@@ -118,13 +138,31 @@ dns.resolve4('dnsseed.bluematt.me', function(err, addrs) {
 });
 */
 
+var managerInit = function managerInit() {
+  console.log('Initializing communications:');
+  addrPolling();
+}
+
+var addrPolling = function addrPolling() {
+  var peers = m.send(5, 'state', 'verack-received', 'getaddr');
+  if (peers === false) {
+    console.log('failed to send getaddr...');
+  } else {
+    var count = 0;
+    for(var i in peers) {
+      if (peers.hasOwnProperty(i)) count++;
+    }
+    console.log('sent getaddr to '+count+' peers');
+  }
+  setTimeout(function() { addrPolling(); }, 60*1000).unref();
+}
 
 function getAddr(buff) {
 	var IPV6_IPV4_PADDING = new Buffer([0,0,0,0,0,0,0,0,0,0,255,255]);
 	var addr = {};
 	if (buff.length == 30) {
 		// with timestamp and services; from ADDR message
-		addr.timestamp = buff.readUInt32LE(0);
+		addr.timestamp = new Date(buff.readUInt32LE(0)*1000);
 		addr.services = new Buffer(8);
 		buff.copy(addr.services, 0, 4, 12);
 		addr.host = getHost(buff.slice(12, 28));
