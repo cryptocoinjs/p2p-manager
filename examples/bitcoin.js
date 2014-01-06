@@ -1,8 +1,9 @@
-var Manager = require('../lib/Manager').Manager;
+var PeerManager = require('../lib/PeerManager').PeerManager;
 var Message = require('./Message').Message;
 var crypto = require('crypto');
+var dns = require('dns');
 
-var m = new Manager();
+var m = new PeerManager();
 // Pick a new random Nonce, to prevent connecting to ourselves
 m.nonce = crypto.randomBytes(8);
 
@@ -16,7 +17,10 @@ process.once('SIGINT', function() {
 	m.shutdown();
 });
 
-m.handleConnect = function handleConnect(p) {
+m.on('connect', function handleConnect(d) {
+	console.log('send bitcoin version message');
+	var p = d.peer;
+	
 	// Send VERSION message
 	var m = new Message(p.magicBytes, true)
 		.putInt32(70000) // version
@@ -33,9 +37,10 @@ m.handleConnect = function handleConnect(p) {
 	p.send(raw);
 	p.state = 'awaiting-verack';
 	return true;
-};
+});
 
-m.versionMessage = function versionMessage(data, p) {
+m.on('versionMessage', function versionMessage(d) {
+	var data = d.data;
 	var parsed = {};
 	parsed.version = data.readUInt32LE(0);
 	parsed.services = new Buffer(8);
@@ -57,19 +62,38 @@ m.versionMessage = function versionMessage(data, p) {
 	}
 	
 	// Send VERACK message
-};
+});
 
-m.verackMessage = function verackMessage(data, p) {
-  p.state = 'verack-received';
-}
+m.on('verackMesasge', function verackMessage(d) {
+  d.peer.state = 'verack-received';
+});
 
 // bitseed.xf2.org
 // dnsseed.bluematt.me
 // seed.bitcoin.sipa.be
 // dnsseed.bitcoin.dashjr.org
 
+/*
+// Resolve DNS seeds
+var dnsSeeds = ['bitseed.xf2.org', 'dnsseed.bluematt.me', 'seed.bitcoin.sipa.be', 'dnsseed.bitcoin.dashjr.org'];
+var waiting = dnsSeeds.length;
+var ipSeeds = [];
+for (var i = 0; i < dnsSeeds.length; i++) {
+	dns.resolve4(dnsSeeds[i], function(err, addrs) {
+		if (err) {
+			console.log(err);
+		} else {
+			ipSeeds = ipSeeds.concat(addrs);
+		}
+		if (--waiting <= 0) {
+			console.log(ipSeeds);
+			m.launch(ipSeeds);
+		}
+	});
+};
+*/
 m.launch('dnsseed.bluematt.me');
-m.addPool(['seed.bitcoin.sipa.be', 'dnsseed.bitcoin.dashjr.org']);
+//m.addPool(['seed.bitcoin.sipa.be', 'dnsseed.bitcoin.dashjr.org']);
 
 
 

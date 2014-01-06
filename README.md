@@ -2,7 +2,7 @@
 Manage a network of peers in a peer-to-peer network.
 
 ## Usage
-When a message comes in from a peer, the Manager looks for a function on itself named `commandMessage`, where `command` is the command given in the message. If found, it is called, with one argument passed (the payload of the command, as a Buffer). The Manager then emits an event named for the command given, with a payload of:
+When a message comes in from a peer, the PeerManager looks for a function on itself named `commandMessage`, where `command` is the command given in the message. If found, it is called, with one argument passed (the payload of the command, as a Buffer). The PeerManager then emits an event named for the command given, with a payload of:
 
 ```
 {
@@ -13,10 +13,10 @@ When a message comes in from a peer, the Manager looks for a function on itself 
 
 If the handler returns false, the event is not emitted.
 
-When an event comes from a Peer object (`connect`, `error`, or `end`), the Manager looks for a method on itself called `handleConnect`, `handleError`, or `handleEnd` respectively, with the Peer object as an argument. If the `handleConnect` method has been defined and it returns false, the Peer is disconnected. After calling `handleError` or `handleEnd`, the Peer is disconnected, regardless of return value.
+When an event comes from a Peer object (`connect`, `error`, or `end`), the PeerManager looks for a method on itself called `handleConnect`, `handleError`, or `handleEnd` respectively, with the Peer object as an argument. If the `handleConnect` method has been defined and it returns false, the Peer is disconnected. After calling `handleError` or `handleEnd`, the Peer is disconnected, regardless of return value.
 
-## `Manager.send()`
-The Manager allows sending messages to a collection of Peers at once, based on certain criteria. The most common criteria is the "state" of the Peer. Each Peer object has a `state` property which is set to `'new'` when first created, `'connecting'` when first opened, and `'connected'` when first `connect` event is heard (before `handleConnect` is called, so that can be overwritten, if desired). Any other states are up to your Manager instance to implement.
+## `PeerManager.send()`
+The PeerManager allows sending messages to a collection of Peers at once, based on certain criteria. The most common criteria is the "state" of the Peer. Each Peer object has a `state` property which is set to `'new'` when first created, `'connecting'` when first opened, and `'connected'` when first `connect` event is heard (before `handleConnect` is called, so that can be overwritten, if desired). Any other states are up to your PeerManager instance to implement.
 
 * `number`: How many peers to send to? Once filtered down, should all or a sub-set be messaged? Pass a Number to send to that many Peers (picked at random). Passing a zero or negative number for this argument sends to all matched Peers.
 * `prop`: (String) Which property of the Peers should be examined?
@@ -26,9 +26,9 @@ The Manager allows sending messages to a collection of Peers at once, based on c
 * `callback`: (function) If provided, is bound to the "`message`" event of the Peers contacted, to await their reply
 
 ```js
-Manager.send('all', 'state', 'connected', 'hi', new Buffer([1,2,3,4,5])); // Send a message to all connected clients
-Manager.send(2, 'state', 'lonely', 'matchmaker', new Buffer([1,2,3,4,5])); // Send a message to a random two Peers who have state=='lonely'
-Manager.send(5, 'myProp', [1,5,42,false], 'hi', new Buffer([1,2,3,4,5])); // Send a message to a random five Peers who have myProp equal to either 1, 5 ,42, or false
+PeerManager.send('all', 'state', 'connected', 'hi', new Buffer([1,2,3,4,5])); // Send a message to all connected clients
+PeerManager.send(2, 'state', 'lonely', 'matchmaker', new Buffer([1,2,3,4,5])); // Send a message to a random two Peers who have state=='lonely'
+PeerManager.send(5, 'myProp', [1,5,42,false], 'hi', new Buffer([1,2,3,4,5])); // Send a message to a random five Peers who have myProp equal to either 1, 5 ,42, or false
 ```
 
 The function returns an dictionary of Peers the message was sent to, stored by their UUID.
@@ -39,7 +39,7 @@ If you're expecting a specific answer to your message, there's a few ways you ca
 A good method if you expect the answer you seek to be in the next few messages from those Peers:
 
 ```js
-var m = new Manager();
+var m = new PeerManager();
 var waitForAnswer = function(d) {
   if (d.command !== 'answer') return; // Wait for next message...
   
@@ -65,7 +65,7 @@ setTimeout(function() {
 If there are lots of other messages being sent around, but very few of the particular answer messages you're looking for, this works well:
 
 ```js
-var m = new Manager();
+var m = new PeerManager();
 var waitForAnswer = function(d) {
   // Look through our list of peers and see if d.peer is one of them
   if (peers[d.peer.getUUID()] !== d.peer) return;
@@ -88,9 +88,9 @@ setTimeout(function() {
 ```
 
 ## Peers
-The Manager keeps a list of known Peers to connect to (the "pool"), as well as a list of those currently connected ("active").
+The PeerManager keeps a list of known Peers to connect to (the "pool"), as well as a list of those currently connected ("active").
 
-As your implementation discovers new Peers, use the `Manager.addPool(hosts)` method to tell the Manager about them. If the number of active Peers is currently below the minimum (`options.minPeers`), a connection will be attempted immediately. Otherwise, they will just be added to the pool. `Manager.addActive(hosts)` adds a new peer and attempts to connect to it immediately, regardless if the number of active Peers is above the threshhold.
+As your implementation discovers new Peers, use the `PeerManager.addPool(hosts)` method to tell the PeerManager about them. If the number of active Peers is currently below the minimum (`options.minPeers`), a connection will be attempted immediately. Otherwise, they will just be added to the pool. `PeerManager.addActive(hosts)` adds a new peer and attempts to connect to it immediately, regardless if the number of active Peers is above the threshhold.
 
 ## Peer lists
 The `seedPeers` argument of `launch()`, and the `hosts` argument of `addPool()` and `addActive()` are lists of hosts, expressed one of the following ways:
