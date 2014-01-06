@@ -1,19 +1,47 @@
 # P2P Manager
 Manage a network of peers in a peer-to-peer network.
 
-## Usage
-When a message comes in from a peer, the PeerManager looks for a function on itself named `commandMessage`, where `command` is the command given in the message. If found, it is called, with one argument passed (the payload of the command, as a Buffer). The PeerManager then emits an event named for the command given, with a payload of:
+## Messages
+
+### `peerConnect`, `peerEnd`, `peerError`
+Emitted when an active Peer emits a `connect`, `end` or `error` message respectively, and the data payload is the same:
+
+```
+{
+  peer: Peer
+}
+```
+
+### `peerMessage`
+Emitted when an active Peer sends a `message` event.
 
 ```
 {
   peer: Peer,
-  data: message payload
+  command: String,
+  data: Raw payload as binary data
 }
 ```
 
-If the handler returns false, the event is not emitted.
+### `commandMessage`
+An alternate version of the `peerMessage` event; in these events, the command of the message is used as the event name (i.e. command `'foo'` would cause a `fooMessage` event).
 
-When an event comes from a Peer object (`connect`, `error`, or `end`), the PeerManager looks for a method on itself called `handleConnect`, `handleError`, or `handleEnd` respectively, with the Peer object as an argument. If the `handleConnect` method has been defined and it returns false, the Peer is disconnected. After calling `handleError` or `handleEnd`, the Peer is disconnected, regardless of return value.
+```
+{
+  peer: Peer,
+  data: Raw payload as binary data
+}
+```
+
+### `error`
+Error message from the PeerManager. The `severity` attribute is one of 'info', 'notice', 'warning', or 'error' (in increasing severity). 
+
+```
+{
+  severity: String,
+  message: String
+}
+```
 
 ## `PeerManager.send()`
 The PeerManager allows sending messages to a collection of Peers at once, based on certain criteria. The most common criteria is the "state" of the Peer. Each Peer object has a `state` property which is set to `'new'` when first created, `'connecting'` when first opened, and `'connected'` when first `connect` event is heard (before `handleConnect` is called, so that can be overwritten, if desired). Any other states are up to your PeerManager instance to implement.
@@ -54,7 +82,7 @@ setTimeout(function() {
   // Ten seconds have passed; give up on those who haven't answered
   for (var uuid in peers) {
     if (peers.hasOwnProperty(uuid)) {
-    	console.log(uuid+' never answered...');
+      console.log(uuid+' never answered...');
       peers[uuid].removeListener('message', waitForAnswer);
     }
   }
@@ -80,7 +108,7 @@ setTimeout(function() {
   // Ten seconds have passed; give up on those who haven't answered
   for (var uuid in peers) {
     if (peers.hasOwnProperty(uuid)) {
-    	console.log(uuid+' never answered...');
+      console.log(uuid+' never answered...');
     }
   }
   m.removeListener('answer', waitForAnswer);

@@ -17,7 +17,7 @@ process.once('SIGINT', function() {
 	m.shutdown();
 });
 
-m.on('connect', function handleConnect(d) {
+m.on('peerConnect', function handleConnect(d) {
 	console.log('send bitcoin version message');
 	var p = d.peer;
 	
@@ -39,6 +39,17 @@ m.on('connect', function handleConnect(d) {
 	return true;
 });
 
+// Every message, from every active peer
+m.on('peerMessage', function peerMessage(d) {
+	console.log(d.peer.getUUID()+': message', d.command, d.data.toString('hex'));
+});
+
+// Error messages of various severity, from the PeerManager
+m.on('error', function error(d) {
+	console.log('('+d.severity+'): '+d.message);
+});
+
+// Every 'version' message, from every active peer
 m.on('versionMessage', function versionMessage(d) {
 	var data = d.data;
 	var parsed = {};
@@ -64,6 +75,7 @@ m.on('versionMessage', function versionMessage(d) {
 	// Send VERACK message
 });
 
+// Every 'verack' message, from every active peer
 m.on('verackMesasge', function verackMessage(d) {
   d.peer.state = 'verack-received';
 });
