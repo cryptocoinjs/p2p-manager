@@ -49,6 +49,10 @@ m.on('error', function error(d) {
 	console.log('('+d.severity+'): '+d.message);
 });
 
+m.on('status', function status(d) {
+  console.log('PeerManager status:', d);
+});
+
 // Every 'version' message, from every active peer
 m.on('versionMessage', function versionMessage(d) {
 	var data = d.data;
@@ -85,7 +89,6 @@ m.on('verackMesasge', function verackMessage(d) {
 // seed.bitcoin.sipa.be
 // dnsseed.bitcoin.dashjr.org
 
-/*
 // Resolve DNS seeds
 var dnsSeeds = ['bitseed.xf2.org', 'dnsseed.bluematt.me', 'seed.bitcoin.sipa.be', 'dnsseed.bitcoin.dashjr.org'];
 var waiting = dnsSeeds.length;
@@ -103,10 +106,18 @@ for (var i = 0; i < dnsSeeds.length; i++) {
 		}
 	});
 };
-*/
-m.launch('dnsseed.bluematt.me');
-//m.addPool(['seed.bitcoin.sipa.be', 'dnsseed.bitcoin.dashjr.org']);
 
+/*
+// Single launch
+dns.resolve4('dnsseed.bluematt.me', function(err, addrs) {
+  if (err) {
+    console.log(err);
+    return;
+  }
+  m.launch(addrs.shift());
+  //m.addPool(addrs);
+});
+*/
 
 
 function getAddr(buff) {
