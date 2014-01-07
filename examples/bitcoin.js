@@ -69,9 +69,9 @@ m.on('versionMessage', function versionMessage(d) {
 	parsed.height = data.readUInt32LE(data.length-4);
 	console.log('VERSION:', parsed);
 	
-	if (parsed.nonce.toString('hex') === this.nonce.toString('hex')) {
+	if (parsed.nonce.toString('hex') === m.nonce.toString('hex')) {
 		// We connected to ourselves!
-		this.disconnect(p);
+		m.delActive(p);
 		return false;
 	}
 	
