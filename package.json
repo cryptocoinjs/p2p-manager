@@ -1,12 +1,23 @@
 {
-  "name": "crypto-p2p-manager",
+  "name": "p2p-manager",
   "version": "0.1.0",
   "description": "Create a peer-to-peer relationship",
+  "keywords": [
+    "p2p",
+    "network",
+    "peers",
+    "cryptography"
+  ],
   "main": "./lib/PeerManager.js",
 
   "dependencies": {
-    "crypto-p2p-node": "0.1.x",
+    "p2p-node": "0.1.x",
     "sha256": "0.1.x"
+  },
+
+  "repository": {
+    "url": "https://github.com/cryptocoinjs/p2p-manager",
+    "type": "git"
   },
 
   "author": "Brooks Boyd <boydb@midnightdesign.ws>"
