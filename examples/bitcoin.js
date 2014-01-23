@@ -84,7 +84,7 @@ m.on('verackMessage', function verackMessage(d) {
   d.peer._changeState('verack-received');
   if (managerReady === false) {
     managerReady = true; // At least one peer now has responded
-    setTimeout(managerInit, 2*1000); // Do initialization stuff after a few seconds, to let others connect too
+    m._changeState('ready');
   }
 });
 
@@ -137,11 +137,12 @@ dns.resolve4('dnsseed.bluematt.me', function(err, addrs) {
   //m.addPool(addrs);
 });
 */
-
-var managerInit = function managerInit() {
-  console.log('Initializing communications:');
-  addrPolling();
-}
+m.on('stateChange', function(d) {
+  if (d.new == 'ready') {
+    console.log('Initializing communications:');
+    addrPolling();
+  }
+});
 
 var addrPolling = function addrPolling() {
   var peers = m.send(5, 'state', 'verack-received', 'getaddr');
