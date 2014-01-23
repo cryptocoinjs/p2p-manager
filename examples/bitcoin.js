@@ -30,11 +30,11 @@ m.on('peerConnect', function handleConnect(d) {
 		.pad(26) // addr_recv
 		.pad(26) // addr_from
 		.putInt64(self.nonce) // nonce
-		.putVarString('Node.js lite peer')
+		.putVarString('/Cryptocoinjs:0.1/')
 		.putInt32(10); // start_height
 
 	p.send('version', msg.raw());
-	p.state = 'awaiting-verack';
+	p._changeState('awaiting-verack');
 	return true;
 });
 
@@ -81,7 +81,7 @@ m.on('versionMessage', function versionMessage(d) {
 
 // Every 'verack' message, from every active peer
 m.on('verackMessage', function verackMessage(d) {
-  d.peer.state = 'verack-received';
+  d.peer._changeState('verack-received');
   if (managerReady === false) {
     managerReady = true; // At least one peer now has responded
     setTimeout(managerInit, 2*1000); // Do initialization stuff after a few seconds, to let others connect too
