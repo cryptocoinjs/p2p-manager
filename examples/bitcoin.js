@@ -39,7 +39,7 @@ m.on('peerConnect', function handleConnect(d) {
 });
 
 // Every message, from every active peer
-m.on('peerMessage', function peerMessage(d) {
+m.on('message', function peerMessage(d) {
 	console.log(d.peer.getUUID()+': message', d.command, d.data.toString('hex'));
 });
 
