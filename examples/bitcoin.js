@@ -34,7 +34,7 @@ m.on('peerConnect', function handleConnect(d) {
 		.putInt32(10); // start_height
 
 	p.send('version', msg.raw());
-	p._changeState('awaiting-verack');
+	p.state = 'awaiting-verack';
 	return true;
 });
 
@@ -81,10 +81,10 @@ m.on('versionMessage', function versionMessage(d) {
 
 // Every 'verack' message, from every active peer
 m.on('verackMessage', function verackMessage(d) {
-  d.peer._changeState('verack-received');
+  d.peer.state = 'verack-received';
   if (managerReady === false) {
     managerReady = true; // At least one peer now has responded
-    m._changeState('ready');
+    m.state = 'ready';
   }
 });
 
