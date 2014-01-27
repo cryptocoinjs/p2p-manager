@@ -11,8 +11,10 @@
   "main": "./lib/PeerManager.js",
 
   "dependencies": {
-    "p2p-node": "0.1.x",
-    "sha256": "0.1.x"
+    "p2p-node": "0.1.x"
+  },
+  "devDependencies": {
+    "crypto-hashing": "0.1.x"
   },
 
   "repository": {
