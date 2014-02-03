@@ -30,7 +30,7 @@ m.on('peerConnect', function handleConnect(d) {
 		.pad(26) // addr_recv
 		.pad(26) // addr_from
 		.putInt64(self.nonce) // nonce
-		.putVarString('Node.js lite peer')
+		.putVarString('/Cryptocoinjs:0.1/')
 		.putInt32(10); // start_height
 
 	p.send('version', msg.raw());
@@ -39,7 +39,7 @@ m.on('peerConnect', function handleConnect(d) {
 });
 
 // Every message, from every active peer
-m.on('peerMessage', function peerMessage(d) {
+m.on('message', function peerMessage(d) {
 	console.log(d.peer.getUUID()+': message', d.command, d.data.toString('hex'));
 });
 
@@ -84,7 +84,7 @@ m.on('verackMessage', function verackMessage(d) {
   d.peer.state = 'verack-received';
   if (managerReady === false) {
     managerReady = true; // At least one peer now has responded
-    setTimeout(managerInit, 2*1000); // Do initialization stuff after a few seconds, to let others connect too
+    m.state = 'ready';
   }
 });
 
@@ -137,11 +137,12 @@ dns.resolve4('dnsseed.bluematt.me', function(err, addrs) {
   //m.addPool(addrs);
 });
 */
-
-var managerInit = function managerInit() {
-  console.log('Initializing communications:');
-  addrPolling();
-}
+m.on('stateChange', function(d) {
+  if (d.new == 'ready') {
+    console.log('Initializing communications:');
+    addrPolling();
+  }
+});
 
 var addrPolling = function addrPolling() {
   var peers = m.send(5, 'state', 'verack-received', 'getaddr');
