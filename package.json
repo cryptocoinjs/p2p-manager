@@ -9,6 +9,9 @@
     "cryptography"
   ],
   "main": "./lib/PeerManager.js",
+  "scripts": {
+     "test": "mocha"
+   },
 
   "dependencies": {
     "p2p-node": "0.1.x"
